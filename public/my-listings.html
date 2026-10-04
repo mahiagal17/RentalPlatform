@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Listings | RentLens</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .dashboard-layout {
+      padding: 3rem 0 5rem;
+    }
+    .dashboard-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+    }
+    .stat-val {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.25rem;
+    }
+    /* Listing item card */
+    .owner-gear-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      transition: all var(--transition-fast);
+    }
+    .owner-gear-card:hover {
+      border-color: var(--border-hover);
+      box-shadow: var(--shadow-md);
+    }
+    .gear-left {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      flex: 1;
+    }
+    .gear-thumb {
+      width: 100px;
+      height: 75px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: var(--bg-tertiary);
+      flex-shrink: 0;
+    }
+    .gear-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .gear-meta-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+    }
+    .gear-tags {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    /* Switch toggle */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      transition: .3s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: var(--success);
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+    .gear-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    @media (max-width: 800px) {
+      .owner-gear-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .gear-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="container">
+      <div class="nav-content"></div>
+    </div>
+  </header>
+
+  <main class="container dashboard-layout">
+    <div class="dashboard-header">
+      <div>
+        <h1 style="font-size: 2rem;">My Equipment Inventory</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.25rem;">
+          Manage your camera gear, adjust availability, and track rental bookings
+        </p>
+      </div>
+      <div>
+        <a href="/listing-form.html" class="btn btn-primary">
+          <span>+ Add New Equipment</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-val" id="totalCount">0</div>
+        <div class="stat-label">Total Gear Listed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="activeCount" style="color: var(--success);">0</div>
+        <div class="stat-label">Active & Rentable</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="bookingsCount" style="color: #a5b4fc;">0</div>
+        <div class="stat-label">Total Booking Requests</div>
+      </div>
+    </div>
+
+    <!-- Listings Container -->
+    <div id="listingsList">
+      <div style="text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+        Loading your equipment...
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    // Route protection
+    if (!Auth.isAuthenticated()) {
+      window.location.href = '/login.html?redirect=/my-listings.html';
+    }
+
+    async function loadMyListings() {
+      const container = document.getElementById('listingsList');
+      try {
+        const data = await apiFetch('/api/listings/owner/mine');
+        const items = data.listings || [];
+
+        // Stats calculation
+        document.getElementById('totalCount').textContent = items.length;
+        document.getElementById('activeCount').textContent = items.filter(i => i.is_active === 1).length;
+        const totalBookings = items.reduce((acc, curr) => acc + (curr.total_bookings || 0), 0);
+        document.getElementById('bookingsCount').textContent = totalBookings;
+
+        if (items.length === 0) {
+          container.innerHTML = `
+            <div style="text-align: center; background: var(--bg-card); border: 1px dashed var(--border-subtle); border-radius: var(--radius-lg); padding: 4rem 2rem;">
+              <div style="font-size: 3rem; margin-bottom: 1rem;">📷</div>
+              <h3 style="font-size: 1.4rem; margin-bottom: 0.5rem;">No Equipment Listed Yet</h3>
+              <p style="color: var(--text-muted); max-width: 440px; margin: 0 auto 1.75rem;">
+                Start earning daily rental income from your cameras, prime lenses, and studio equipment.
+              </p>
+              <a href="/listing-form.html" class="btn btn-primary">
+                List Your First Item
+              </a>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = items.map(item => {
+          const coverImg = (item.images && item.images[0]) || 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=300&q=80';
+          const isActive = item.is_active === 1;
+
+          return `
+            <div class="owner-gear-card" id="card-${item.id}">
+              <div class="gear-left">
+                <div class="gear-thumb">
+                  <img src="${coverImg}" alt="${item.title}" onerror="this.src='https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=300&q=80'">
+                </div>
+                <div>
+                  <h3 class="gear-meta-title">
+                    <a href="/listing-detail.html?id=${item.id}" style="color: #fff;">${item.title}</a>
+                  </h3>
+                  <div class="gear-tags">
+                    <span style="color: var(--primary); font-weight: 700;">${formatINR(item.price_per_day)}/day</span>
+                    <span>•</span>
+                    <span>${item.category}</span>
+                    <span>•</span>
+                    <span>📍 ${item.city}</span>
+                    <span>•</span>
+                    <span>📅 ${item.total_bookings || 0} Bookings</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Toggle Active & Actions -->
+              <div class="gear-actions">
+                <div class="toggle-wrap">
+                  <label class="switch">
+                    <input 
+                      type="checkbox" 
+                      ${isActive ? 'checked' : ''} 
+                      onchange="toggleActiveStatus(${item.id}, this.checked)"
+                    >
+                    <span class="slider"></span>
+                  </label>
+                  <span id="status-label-${item.id}" style="color: ${isActive ? 'var(--success)' : 'var(--text-dim)'};">
+                    ${isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+
+                <a href="/listing-form.html?id=${item.id}" class="btn btn-secondary btn-sm" title="Edit Item">
+                  ✏️ Edit
+                </a>
+
+                <a href="/listing-detail.html?id=${item.id}" class="btn btn-outline btn-sm" title="View Public Page">
+                  👁️ View
+                </a>
+
+                <button class="btn btn-danger btn-sm" onclick="confirmDelete(${item.id}, '${item.title.replace(/'/g, "\\'")}')" title="Delete Listing">
+                  🗑️
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        showToast('Failed to load listings: ' + err.message, 'error');
+      }
+    }
+
+    async function toggleActiveStatus(id, isActive) {
+      try {
+        const res = await apiFetch(`/api/listings/${id}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ is_active: isActive ? 1 : 0 })
+        });
+
+        const label = document.getElementById(`status-label-${id}`);
+        if (label) {
+          label.textContent = res.is_active ? 'Active' : 'Inactive';
+          label.style.color = res.is_active ? 'var(--success)' : 'var(--text-dim)';
+        }
+
+        showToast(res.message, 'success');
+        // Update active count
+        const activeCountEl = document.getElementById('activeCount');
+        let current = parseInt(activeCountEl.textContent, 10);
+        activeCountEl.textContent = isActive ? current + 1 : current - 1;
+      } catch (err) {
+        showToast('Error changing status: ' + err.message, 'error');
+        loadMyListings(); // revert state
+      }
+    }
+
+    async function confirmDelete(id, title) {
+      const ok = confirm(`Are you sure you want to delete "${title}"?\n\nNote: If this equipment has active or upcoming bookings, deletion will be safely blocked.`);
+      if (!ok) return;
+
+      try {
+        const res = await apiFetch(`/api/listings/${id}`, {
+          method: 'DELETE'
+        });
+
+        showToast(res.message || 'Listing deleted successfully', 'success');
+        const card = document.getElementById(`card-${id}`);
+        if (card) card.remove();
+        loadMyListings();
+      } catch (err) {
+        // EC-2.1: Upcoming bookings safeguard error alert
+        alert(`Deletion Safeguard:\n\n${err.message}`);
+      }
+    }
+
+    loadMyListings();
+  </script>
+</body>
+</html>

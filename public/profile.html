@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile | RentLens</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .profile-layout {
+      padding: 3.5rem 0;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .profile-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      box-shadow: var(--shadow-lg);
+      margin-bottom: 2rem;
+    }
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .avatar-large {
+      width: 76px;
+      height: 76px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 4px 16px var(--primary-glow);
+    }
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .form-input {
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.8rem 1rem;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-family: var(--font-body);
+      outline: none;
+      transition: all var(--transition-fast);
+    }
+    .form-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+    .form-input[readonly] {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-dim);
+      cursor: not-allowed;
+    }
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .action-tile {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: all var(--transition-fast);
+    }
+    .action-tile:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="container">
+      <div class="nav-content"></div>
+    </div>
+  </header>
+
+  <main class="container profile-layout">
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="avatar-large" id="avatarLetter">U</div>
+        <div>
+          <h1 id="displayName" class="profile-title" style="font-size: 1.75rem;">Loading Profile...</h1>
+          <p id="displayEmail" style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.25rem;">user@example.com</p>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.65rem;">
+            <span class="card-category-badge" style="position: static;">Owner & Renter Account</span>
+          </div>
+        </div>
+      </div>
+
+      <form id="profileForm">
+        <div class="form-group">
+          <label class="form-label" for="nameInput">Full Name</label>
+          <input type="text" id="nameInput" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="emailInput">Email Address (Read-only)</label>
+          <input type="email" id="emailInput" class="form-input" readonly title="Email cannot be changed">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label" for="phoneInput">Mobile Phone</label>
+            <input type="tel" id="phoneInput" class="form-input" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cityInput">City / Primary Location</label>
+            <input type="text" id="cityInput" class="form-input" required>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem;">
+          <button type="submit" id="saveBtn" class="btn btn-primary">
+            <span>Save Profile Changes</span>
+          </button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="Auth.logout()">
+            <span>Log Out</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Quick Navigation to Rental Dashboards -->
+    <div class="profile-card">
+      <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">Manage Your Activities</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Quickly jump to your listings or booking requests</p>
+      
+      <div class="quick-actions-grid">
+        <a href="/my-listings.html" class="action-tile">
+          <span style="font-size: 1.25rem;">📷</span>
+          <strong style="color: var(--text-main);">My Listings</strong>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Manage your equipment catalog</span>
+        </a>
+
+        <a href="/my-bookings.html" class="action-tile">
+          <span style="font-size: 1.25rem;">🎒</span>
+          <strong style="color: var(--text-main);">My Bookings</strong>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">View gear you have reserved</span>
+        </a>
+
+        <a href="/booking-requests.html" class="action-tile">
+          <span style="font-size: 1.25rem;">📬</span>
+          <strong style="color: var(--text-main);">Booking Requests</strong>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Approve or decline requests</span>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    // Route guard
+    if (!Auth.isAuthenticated()) {
+      window.location.href = '/login.html?redirect=/profile.html';
+    }
+
+    async function loadProfile() {
+      try {
+        const data = await apiFetch('/api/auth/me');
+        const user = data.user;
+
+        document.getElementById('displayName').textContent = user.name;
+        document.getElementById('displayEmail').textContent = user.email;
+        document.getElementById('avatarLetter').textContent = user.name.charAt(0).toUpperCase();
+
+        document.getElementById('nameInput').value = user.name;
+        document.getElementById('emailInput').value = user.email;
+        document.getElementById('phoneInput').value = user.phone;
+        document.getElementById('cityInput').value = user.city;
+
+        // Update local state
+        Auth.setUser(user);
+      } catch (err) {
+        showToast('Failed to load profile details: ' + err.message, 'error');
+      }
+    }
+
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = `<span>Saving...</span>`;
+
+      const name = document.getElementById('nameInput').value.trim();
+      const phone = document.getElementById('phoneInput').value.trim();
+      const city = document.getElementById('cityInput').value.trim();
+
+      try {
+        const data = await apiFetch('/api/auth/profile', {
+          method: 'PUT',
+          body: JSON.stringify({ name, phone, city })
+        });
+
+        Auth.setUser(data.user);
+        showToast('Profile updated successfully!', 'success');
+        loadProfile();
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = `<span>Save Profile Changes</span>`;
+      }
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>

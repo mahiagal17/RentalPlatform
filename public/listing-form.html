@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listing Form | RentLens</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .form-layout {
+      padding: 3rem 0 5rem;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+    .form-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      box-shadow: var(--shadow-lg);
+    }
+    .form-header {
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.8rem 1rem;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-family: var(--font-body);
+      outline: none;
+      transition: all var(--transition-fast);
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+    .form-textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    .help-text {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-top: 0.35rem;
+    }
+    .ai-box {
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      margin-top: 0.75rem;
+    }
+    .ai-action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .image-previews {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 0.75rem;
+    }
+    .preview-box {
+      width: 90px;
+      height: 70px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-tertiary);
+    }
+    .preview-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .error-banner {
+      display: none;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid var(--danger);
+      color: #fca5a5;
+      padding: 0.9rem 1.15rem;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      margin-bottom: 1.75rem;
+    }
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="container">
+      <div class="nav-content"></div>
+    </div>
+  </header>
+
+  <main class="container form-layout">
+    <div class="form-card">
+      <div class="form-header">
+        <h1 id="pageTitle" style="font-size: 1.85rem; margin-bottom: 0.35rem;">List Your Equipment</h1>
+        <p id="pageSubtitle" style="color: var(--text-muted); font-size: 0.95rem;">
+          Make your cameras, lenses, and gear available for rent to local creators
+        </p>
+      </div>
+
+      <div id="errorBanner" class="error-banner"></div>
+
+      <form id="gearForm">
+        <!-- Title -->
+        <div class="form-group">
+          <label class="form-label" for="title">Listing Title *</label>
+          <input 
+            type="text" 
+            id="title" 
+            class="form-input" 
+            placeholder="e.g. Sony Alpha A7 IV Body + 2 Batteries" 
+            required 
+            minlength="3" 
+            maxlength="120"
+          >
+          <div class="help-text">Clear, descriptive title mentioning brand and key model.</div>
+        </div>
+
+        <!-- Category & Price -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="category">Category *</label>
+            <select id="category" class="form-select" required>
+              <option value="">Select a Category</option>
+              <option value="Cameras">Cameras</option>
+              <option value="Lenses">Lenses</option>
+              <option value="Lighting">Lighting</option>
+              <option value="Tripods & Support">Tripods & Support</option>
+              <option value="Audio">Audio</option>
+              <option value="Drones">Drones</option>
+              <option value="Accessories">Accessories</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="price_per_day">Price Per Day (₹) *</label>
+            <input 
+              type="number" 
+              id="price_per_day" 
+              class="form-input" 
+              placeholder="e.g. 2500" 
+              required 
+              min="50" 
+              max="500000" 
+              step="1"
+            >
+            <div class="help-text">Rental charge per calendar day (inclusive).</div>
+          </div>
+        </div>
+
+        <!-- City Location -->
+        <div class="form-group">
+          <label class="form-label" for="city">City / Handover Location *</label>
+          <input 
+            type="text" 
+            id="city" 
+            class="form-input" 
+            placeholder="e.g. Mumbai, Andheri West" 
+            required
+          >
+          <div class="help-text">Area or city where equipment will be picked up and returned.</div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label class="form-label" for="description">Detailed Description *</label>
+          <textarea 
+            id="description" 
+            class="form-textarea" 
+            placeholder="Describe condition, sensor specs, included accessories (batteries, charger, cables, bag), and any special instructions..." 
+            required
+          ></textarea>
+        </div>
+
+        <!-- Images -->
+        <div class="form-group">
+          <label class="form-label" for="images">Image URLs (comma or newline separated, max 5)</label>
+          <textarea 
+            id="images" 
+            class="form-textarea" 
+            style="min-height: 80px;" 
+            placeholder="https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg"
+          ></textarea>
+          <div class="help-text">Paste direct image links. Leave empty to use standard gear image.</div>
+          <div class="image-previews" id="imagePreviews"></div>
+        </div>
+
+        <!-- Rental Terms -->
+        <div class="form-group">
+          <label class="form-label" for="rental_terms">Rental Terms & Conditions</label>
+          <div class="ai-box">
+            <div class="ai-action-bar">
+              <span style="font-size: 0.85rem; font-weight: 600; color: #c7d2fe;">AI Terms Generator</span>
+              <button type="button" id="generateTermsBtn" class="btn btn-secondary btn-sm">
+                <span>✨ Generate Terms with Gemini AI</span>
+              </button>
+            </div>
+            <textarea 
+              id="rental_terms" 
+              class="form-textarea" 
+              placeholder="Rental rules, return timings, damage liability, late fees, and cancellation policy..."
+              style="min-height: 140px; background: rgba(10, 15, 29, 0.6);"
+            ></textarea>
+            <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.5rem;">
+              ℹ️ You can edit and customize these terms before saving.
+            </p>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+          <button type="submit" id="submitBtn" class="btn btn-primary btn-lg" style="flex: 2;">
+            <span id="submitBtnText">Publish Equipment</span>
+          </button>
+          <a href="/my-listings.html" class="btn btn-secondary btn-lg" style="flex: 1;">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    // Route protection
+    if (!Auth.isAuthenticated()) {
+      window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('id');
+    const isEditMode = !!editId;
+
+    const form = document.getElementById('gearForm');
+    const errorBanner = document.getElementById('errorBanner');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitBtnText = document.getElementById('submitBtnText');
+    const imageInput = document.getElementById('images');
+    const imagePreviews = document.getElementById('imagePreviews');
+
+    if (isEditMode) {
+      document.title = 'Edit Equipment | RentLens';
+      document.getElementById('pageTitle').textContent = 'Edit Equipment Listing';
+      document.getElementById('pageSubtitle').textContent = 'Update gear specs, pricing, and rental terms';
+      submitBtnText.textContent = 'Save Changes';
+      loadExistingListing(editId);
+    } else {
+      // Pre-fill user's default city if available
+      const user = Auth.getUser();
+      if (user && user.city) {
+        document.getElementById('city').value = user.city;
+      }
+    }
+
+    async function loadExistingListing(id) {
+      try {
+        const data = await apiFetch(`/api/listings/${id}`);
+        const item = data.listing;
+
+        if (!data.isOwner) {
+          showToast('You are not authorized to edit this listing.', 'error');
+          setTimeout(() => window.location.href = '/my-listings.html', 1500);
+          return;
+        }
+
+        document.getElementById('title').value = item.title;
+        document.getElementById('category').value = item.category;
+        document.getElementById('price_per_day').value = item.price_per_day;
+        document.getElementById('city').value = item.city;
+        document.getElementById('description').value = item.description;
+        document.getElementById('rental_terms').value = item.rental_terms || '';
+
+        if (item.images && item.images.length > 0) {
+          imageInput.value = item.images.join('\n');
+          updateImagePreviews();
+        }
+      } catch (err) {
+        showToast('Failed to load listing for editing: ' + err.message, 'error');
+      }
+    }
+
+    function updateImagePreviews() {
+      const urls = imageInput.value
+        .split(/[\n,]/)
+        .map(u => u.trim())
+        .filter(u => u.length > 0)
+        .slice(0, 5);
+
+      imagePreviews.innerHTML = urls.map(u => `
+        <div class="preview-box">
+          <img src="${u}" alt="Preview" onerror="this.src='https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=300&q=80'">
+        </div>
+      `).join('');
+    }
+
+    imageInput.addEventListener('input', updateImagePreviews);
+
+    // AI Terms generation placeholder (Will be wired to Module 5 AI endpoint)
+    document.getElementById('generateTermsBtn').addEventListener('click', async () => {
+      const title = document.getElementById('title').value.trim();
+      const category = document.getElementById('category').value;
+      const price = document.getElementById('price_per_day').value;
+      const city = document.getElementById('city').value.trim();
+
+      const btn = document.getElementById('generateTermsBtn');
+      btn.disabled = true;
+      btn.innerHTML = `<span>Generating...</span>`;
+
+      try {
+        // Try calling Module 5 AI endpoint if available, else generate standard template
+        const res = await fetch('/api/ai/generate-terms', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Auth.getToken()}`
+          },
+          body: JSON.stringify({ title, category, pricePerDay: price, city })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('rental_terms').value = data.terms;
+          showToast('Rental terms generated!', 'success');
+        } else {
+          // Standard template fallback
+          generateFallbackTerms(title, price, city);
+        }
+      } catch {
+        generateFallbackTerms(title, price, city);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>✨ Generate Terms with Gemini AI</span>`;
+      }
+    });
+
+    function generateFallbackTerms(title, price, city) {
+      const p = price ? `₹${price}` : 'daily rate';
+      document.getElementById('rental_terms').value = 
+`1. Permitted Use & Care:
+Handle the ${title || 'camera equipment'} with utmost professional care. Protect from moisture, sand, and dust. No unauthorized repairs.
+
+2. Pickup & Return Timings:
+Pickup and return in ${city || 'the designated city'} between 9:00 AM and 8:00 PM on booked dates. Photo ID required at handover.
+
+3. Damage & Loss Liability:
+The renter is 100% liable for repair or full replacement costs in case of scratches, glass damage, or loss.
+
+4. Late Return Fee:
+Delayed returns will incur a late fee of ₹500/hour or up to the full daily rate of ${p}.
+
+5. Cancellation Policy:
+Cancellations are allowed without penalty before the scheduled rental start date.`;
+      showToast('Template rental terms populated', 'info');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorBanner.style.display = 'none';
+
+      const title = document.getElementById('title').value.trim();
+      const category = document.getElementById('category').value;
+      const price_per_day = Number(document.getElementById('price_per_day').value);
+      const city = document.getElementById('city').value.trim();
+      const description = document.getElementById('description').value.trim();
+      const rental_terms = document.getElementById('rental_terms').value.trim();
+
+      const images = imageInput.value
+        .split(/[\n,]/)
+        .map(u => u.trim())
+        .filter(u => u.length > 0)
+        .slice(0, 5);
+
+      submitBtn.disabled = true;
+      submitBtnText.textContent = isEditMode ? 'Saving Changes...' : 'Publishing...';
+
+      try {
+        const endpoint = isEditMode ? `/api/listings/${editId}` : '/api/listings';
+        const method = isEditMode ? 'PUT' : 'POST';
+
+        const data = await apiFetch(endpoint, {
+          method,
+          body: JSON.stringify({
+            title,
+            category,
+            price_per_day,
+            city,
+            description,
+            images,
+            rental_terms
+          })
+        });
+
+        showToast(data.message || 'Equipment listing saved!', 'success');
+        setTimeout(() => {
+          window.location.href = `/listing-detail.html?id=${isEditMode ? editId : data.listing.id}`;
+        }, 500);
+
+      } catch (err) {
+        errorBanner.textContent = err.message;
+        errorBanner.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtnText.textContent = isEditMode ? 'Save Changes' : 'Publish Equipment';
+      }
+    });
+  </script>
+</body>
+</html>

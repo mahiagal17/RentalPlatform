@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Equipment Details | RentLens</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .detail-layout {
+      padding: 2.5rem 0 5rem;
+    }
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      margin-bottom: 1.5rem;
+    }
+    .breadcrumb a:hover {
+      color: var(--primary);
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 3rem;
+      align-items: start;
+    }
+    /* Gallery */
+    .gallery-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .main-image-wrap {
+      width: 100%;
+      height: 420px;
+      border-radius: var(--radius-lg);
+      background: var(--bg-tertiary);
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-md);
+    }
+    .main-image-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .thumbnails-row {
+      display: flex;
+      gap: 0.75rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+    .thumb-btn {
+      width: 80px;
+      height: 60px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 2px solid transparent;
+      cursor: pointer;
+      background: var(--bg-tertiary);
+      transition: all var(--transition-fast);
+      flex-shrink: 0;
+    }
+    .thumb-btn.active, .thumb-btn:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+    .thumb-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    /* Details */
+    .spec-badges {
+      display: flex;
+      gap: 0.65rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .detail-title {
+      font-size: 2.25rem;
+      margin-bottom: 1rem;
+      line-height: 1.25;
+    }
+    .detail-section {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      margin-bottom: 1.75rem;
+    }
+    .detail-section h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .description-text {
+      color: var(--text-muted);
+      line-height: 1.75;
+      font-size: 0.98rem;
+      white-space: pre-line;
+    }
+    .terms-box {
+      background: rgba(0, 0, 0, 0.25);
+      border-left: 3px solid var(--primary);
+      padding: 1.25rem;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.65;
+      white-space: pre-line;
+    }
+    .disclaimer-note {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-top: 0.75rem;
+      display: flex;
+      gap: 0.4rem;
+      align-items: flex-start;
+    }
+    /* Owner Info */
+    .owner-info-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.25rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      margin-top: 1rem;
+    }
+    .owner-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+    /* Sidebar Booking Widget */
+    .booking-sidebar {
+      position: sticky;
+      top: 92px;
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      box-shadow: var(--shadow-lg);
+    }
+    .sidebar-price-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 1.5rem;
+    }
+    .sidebar-price-amount {
+      font-family: var(--font-heading);
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .sidebar-price-unit {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    .inactive-banner {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid var(--warning);
+      color: #fde68a;
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 900px) {
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+      .booking-sidebar {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="container">
+      <div class="nav-content"></div>
+    </div>
+  </header>
+
+  <main class="container detail-layout">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      <a href="/">Browse</a>
+      <span>/</span>
+      <span id="bcCategory">Category</span>
+      <span>/</span>
+      <span id="bcTitle" style="color: var(--text-main);">Equipment</span>
+    </nav>
+
+    <!-- Notice if inactive -->
+    <div id="statusAlert" style="display: none;" class="inactive-banner"></div>
+
+    <div class="detail-grid">
+      <!-- Left Column: Media & Specs -->
+      <div>
+        <div class="gallery-container">
+          <div class="main-image-wrap">
+            <img id="mainImage" src="" alt="Equipment Photo" onerror="this.src='https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=80'">
+          </div>
+          <div class="thumbnails-row" id="thumbnailsRow"></div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+          <div class="spec-badges">
+            <span class="card-category-badge" id="badgeCategory" style="position: static;">Category</span>
+            <span class="card-city-badge" id="badgeCity" style="position: static;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              City
+            </span>
+          </div>
+
+          <h1 id="listingTitle" class="detail-title">Loading Equipment...</h1>
+        </div>
+
+        <!-- Description Section -->
+        <section class="detail-section">
+          <h3>
+            <span>📝</span>
+            <span>About this Equipment</span>
+          </h3>
+          <p id="listingDescription" class="description-text"></p>
+        </section>
+
+        <!-- Rental Terms Section -->
+        <section class="detail-section">
+          <h3>
+            <span>📋</span>
+            <span>Rental Terms & Guidelines</span>
+          </h3>
+          <div id="listingTerms" class="terms-box">
+            Standard rental conditions apply.
+          </div>
+          <p class="disclaimer-note">
+            <span>ℹ️</span>
+            <span>Terms generated by owner or AI guidance for convenience. Review carefully before booking.</span>
+          </p>
+        </section>
+
+        <!-- Owner Card -->
+        <section class="detail-section">
+          <h3>
+            <span>👤</span>
+            <span>Equipment Owner</span>
+          </h3>
+          <div class="owner-info-card">
+            <div class="owner-avatar" id="ownerAvatarLetter">O</div>
+            <div>
+              <strong id="ownerName" style="color: var(--text-main); font-size: 1.05rem;">Owner Name</strong>
+              <p id="ownerLocation" style="color: var(--text-muted); font-size: 0.85rem;">Verified Owner in Mumbai</p>
+              <p id="ownerContact" style="color: var(--primary); font-size: 0.85rem; margin-top: 0.25rem;">📞 Contact provided after booking request</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Column: Booking Widget Slot (Integrated in Modules 3 & 4) -->
+      <div>
+        <aside class="booking-sidebar">
+          <div class="sidebar-price-header">
+            <span class="sidebar-price-amount" id="sidebarPrice">₹0</span>
+            <span class="sidebar-price-unit">/ day</span>
+          </div>
+
+          <!-- Owner Quick Controls (if current user is owner) -->
+          <div id="ownerControls" style="display: none; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle);">
+            <p style="font-size: 0.85rem; color: #a5b4fc; font-weight: 600; margin-bottom: 0.75rem;">👑 You own this listing</p>
+            <div style="display: flex; gap: 0.5rem;">
+              <a id="editListingBtn" href="#" class="btn btn-secondary btn-sm" style="flex: 1;">Edit Listing</a>
+              <a href="/my-listings.html" class="btn btn-outline btn-sm" style="flex: 1;">My Dashboard</a>
+            </div>
+          </div>
+
+          <!-- Calendar & Booking Form Slot (Modules 3 & 4) -->
+          <div id="bookingWidgetSlot">
+            <div style="background: var(--bg-secondary); border: 1px dashed var(--border-accent); border-radius: var(--radius-md); padding: 1.5rem; text-align: center;">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">📅</div>
+              <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Booking & Availability</h4>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+                Select your shoot dates to check real-time availability and calculate total rental cost.
+              </p>
+              <button id="bookPlaceholderBtn" class="btn btn-primary" style="width: 100%;">
+                <span>Reserve Equipment</span>
+              </button>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem; font-size: 0.82rem; color: var(--text-dim); text-align: center;">
+            <p>✓ Inclusive daily rates • Zero double-bookings</p>
+            <p style="margin-top: 0.35rem;">✓ Direct handover & payment settlement</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const listingId = urlParams.get('id');
+
+    if (!listingId) {
+      window.location.href = '/';
+    }
+
+    async function loadListingDetails() {
+      try {
+        const data = await apiFetch(`/api/listings/${listingId}`);
+        const listing = data.listing;
+        const isOwner = data.isOwner;
+
+        // Title and Breadcrumbs
+        document.title = `${listing.title} | RentLens`;
+        document.getElementById('listingTitle').textContent = listing.title;
+        document.getElementById('bcTitle').textContent = listing.title;
+        document.getElementById('bcCategory').textContent = listing.category;
+        document.getElementById('badgeCategory').textContent = listing.category;
+        document.getElementById('badgeCity').textContent = listing.city;
+
+        // Pricing
+        document.getElementById('sidebarPrice').textContent = formatINR(listing.price_per_day);
+
+        // Description & Terms
+        document.getElementById('listingDescription').textContent = listing.description;
+        if (listing.rental_terms && listing.rental_terms.trim()) {
+          document.getElementById('listingTerms').textContent = listing.rental_terms;
+        }
+
+        // Owner details
+        document.getElementById('ownerName').textContent = listing.owner_name;
+        document.getElementById('ownerLocation').textContent = `Verified Gear Owner in ${listing.owner_city}`;
+        document.getElementById('ownerAvatarLetter').textContent = listing.owner_name.charAt(0).toUpperCase();
+
+        if (isOwner) {
+          document.getElementById('ownerContact').textContent = `📞 Your Contact: ${listing.owner_phone}`;
+          document.getElementById('ownerControls').style.display = 'block';
+          document.getElementById('editListingBtn').href = `/listing-form.html?id=${listing.id}`;
+        }
+
+        // Handle Inactive status
+        if (listing.status_message) {
+          const alert = document.getElementById('statusAlert');
+          alert.textContent = listing.status_message;
+          alert.style.display = 'block';
+        }
+
+        if (listing.booking_disabled) {
+          const slot = document.getElementById('bookingWidgetSlot');
+          slot.innerHTML = `
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); border-radius: var(--radius-md); padding: 1.5rem; text-align: center;">
+              <h4 style="color: #fca5a5; margin-bottom: 0.5rem;">Booking Unavailable</h4>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">This equipment is currently inactive and not accepting booking requests.</p>
+            </div>
+          `;
+        }
+
+        // Gallery Photos
+        const images = (listing.images && listing.images.length > 0) 
+          ? listing.images 
+          : ['https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=80'];
+
+        const mainImg = document.getElementById('mainImage');
+        mainImg.src = images[0];
+
+        const thumbsRow = document.getElementById('thumbnailsRow');
+        if (images.length > 1) {
+          thumbsRow.innerHTML = images.map((img, idx) => `
+            <button class="thumb-btn ${idx === 0 ? 'active' : ''}" onclick="selectThumb('${img}', this)">
+              <img src="${img}" alt="Thumbnail ${idx + 1}" onerror="this.src='https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=300&q=80'">
+            </button>
+          `).join('');
+        }
+
+      } catch (err) {
+        showToast('Error loading listing: ' + err.message, 'error');
+        setTimeout(() => window.location.href = '/', 1500);
+      }
+    }
+
+    function selectThumb(url, el) {
+      document.getElementById('mainImage').src = url;
+      document.querySelectorAll('.thumb-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    loadListingDetails();
+  </script>
+</body>
+</html>

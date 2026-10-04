@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log In | RentLens Camera Rental Platform</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .auth-page {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 3rem 1.5rem;
+    }
+    .auth-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: var(--shadow-lg);
+    }
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .auth-title {
+      font-size: 1.85rem;
+      margin-bottom: 0.5rem;
+    }
+    .auth-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    .form-group {
+      margin-bottom: 1.35rem;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .form-input {
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.8rem 1rem;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-family: var(--font-body);
+      outline: none;
+      transition: all var(--transition-fast);
+    }
+    .form-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+    .error-banner {
+      display: none;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid var(--danger);
+      color: #fca5a5;
+      padding: 0.85rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.88rem;
+      margin-bottom: 1.5rem;
+    }
+    .demo-users-box {
+      margin-top: 2rem;
+      padding-top: 1.75rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .demo-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-bottom: 0.85rem;
+      text-align: center;
+    }
+    .demo-btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="container">
+      <div class="nav-content"></div>
+    </div>
+  </header>
+
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1 class="auth-title">Welcome Back</h1>
+        <p class="auth-desc">Log in to manage equipment and bookings</p>
+      </div>
+
+      <div id="errorBanner" class="error-banner"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address</label>
+          <input 
+            type="email" 
+            id="email" 
+            class="form-input" 
+            placeholder="e.g. arjun@example.com" 
+            required 
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            class="form-input" 
+            placeholder="Enter your password" 
+            required 
+            autocomplete="current-password"
+          >
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+          <span>Log In</span>
+        </button>
+      </form>
+
+      <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+        Don't have an account? <a href="/register.html" style="color: var(--primary); font-weight: 600;">Sign up</a>
+      </p>
+
+      <!-- Quick Demo Login Helpers -->
+      <div class="demo-users-box">
+        <p class="demo-title">⚡ 1-Click Demo Accounts</p>
+        <div class="demo-btn-group">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="quickLogin('owner@rental.com', 'password123')">
+            <span>👑 Log in as Owner (Arjun Mehta)</span>
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="quickLogin('renter@rental.com', 'password123')">
+            <span>🎒 Log in as Renter (Priya Sharma)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    // Redirect if already logged in
+    if (Auth.isAuthenticated()) {
+      const urlParams = new URLSearchParams(window.location.search);
+      window.location.href = urlParams.get('redirect') || '/';
+    }
+
+    const form = document.getElementById('loginForm');
+    const errorBanner = document.getElementById('errorBanner');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function showError(msg) {
+      errorBanner.textContent = msg;
+      errorBanner.style.display = 'block';
+    }
+
+    function hideError() {
+      errorBanner.style.display = 'none';
+      errorBanner.textContent = '';
+    }
+
+    async function executeLogin(email, password) {
+      hideError();
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>Logging in...</span>`;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || 'Login failed. Please check your credentials.');
+        }
+
+        // Store JWT and user info
+        Auth.setToken(data.token);
+        Auth.setUser(data.user);
+
+        showToast('Login successful! Welcome back, ' + data.user.name.split(' ')[0], 'success');
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const target = urlParams.get('redirect') || '/';
+        setTimeout(() => {
+          window.location.href = target;
+        }, 400);
+
+      } catch (err) {
+        showError(err.message);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span>Log In</span>`;
+      }
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      executeLogin(email, password);
+    });
+
+    function quickLogin(email, password) {
+      document.getElementById('email').value = email;
+      document.getElementById('password').value = password;
+      executeLogin(email, password);
+    }
+  </script>
+</body>
+</html>
