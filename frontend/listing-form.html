@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Listing Form | RentLens</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="./css/style.css">
   <style>
     .form-layout {
       padding: 3rem 0 5rem;
@@ -220,25 +220,37 @@
           <div class="image-previews" id="imagePreviews"></div>
         </div>
 
-        <!-- Rental Terms -->
+        <!-- Rental Terms (Module 5) -->
         <div class="form-group">
-          <label class="form-label" for="rental_terms">Rental Terms & Conditions</label>
+          <label class="form-label" for="rental_terms">Rental Terms & Guidelines</label>
           <div class="ai-box">
             <div class="ai-action-bar">
-              <span style="font-size: 0.85rem; font-weight: 600; color: #c7d2fe;">AI Terms Generator</span>
-              <button type="button" id="generateTermsBtn" class="btn btn-secondary btn-sm">
-                <span>✨ Generate Terms with Gemini AI</span>
-              </button>
+              <span style="font-size: 0.85rem; font-weight: 700; color: #c7d2fe;">✨ Smart Terms Generator</span>
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button type="button" id="generateTermsBtn" class="btn btn-primary btn-sm">
+                  <span>✨ Generate with Gemini AI</span>
+                </button>
+                <button type="button" id="useDefaultTermsBtn" class="btn btn-secondary btn-sm">
+                  <span>📋 Standard Template</span>
+                </button>
+                <button type="button" id="clearTermsBtn" class="btn btn-outline btn-sm">
+                  <span>Clear</span>
+                </button>
+              </div>
             </div>
+
             <textarea 
               id="rental_terms" 
               class="form-textarea" 
-              placeholder="Rental rules, return timings, damage liability, late fees, and cancellation policy..."
-              style="min-height: 140px; background: rgba(10, 15, 29, 0.6);"
+              placeholder="5 standard clauses covering: 1. Permitted Use, 2. Pickup & Return Timings, 3. Damage & Loss Liability, 4. Late Return Fees, 5. Cancellation Policy..."
+              style="min-height: 180px; background: rgba(10, 15, 29, 0.7); font-size: 0.88rem; line-height: 1.6;"
             ></textarea>
-            <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.5rem;">
-              ℹ️ You can edit and customize these terms before saving.
-            </p>
+
+            <!-- EC-5.6: Mandatory Legal Disclaimer Banner -->
+            <div style="margin-top: 0.75rem; background: rgba(99, 102, 241, 0.08); border: 1px solid var(--border-accent); border-radius: var(--radius-sm); padding: 0.75rem; font-size: 0.76rem; color: #c7d2fe; display: flex; align-items: flex-start; gap: 0.5rem;">
+              <span>⚖️</span>
+              <span><strong>Legal Disclaimer (EC-5.6):</strong> AI-generated guidelines are provided for peer-rental convenience and do not constitute formal legal counsel. You can review, modify, or add specific clauses above before saving.</span>
+            </div>
           </div>
         </div>
 
@@ -252,7 +264,7 @@
     </div>
   </main>
 
-  <script src="/js/app.js"></script>
+  <script src="./js/app.js"></script>
   <script>
     // Route protection
     if (!Auth.isAuthenticated()) {
@@ -327,62 +339,96 @@
 
     imageInput.addEventListener('input', updateImagePreviews);
 
-    // AI Terms generation placeholder (Will be wired to Module 5 AI endpoint)
-    document.getElementById('generateTermsBtn').addEventListener('click', async () => {
+    // Module 5: AI & Template Terms Handlers (with EC-5.4 overwrite protection)
+    const termsField = document.getElementById('rental_terms');
+    const generateTermsBtn = document.getElementById('generateTermsBtn');
+    const useDefaultTermsBtn = document.getElementById('useDefaultTermsBtn');
+    const clearTermsBtn = document.getElementById('clearTermsBtn');
+
+    function checkOverwritePermission() {
+      if (termsField.value.trim().length > 0) {
+        return confirm('Generating new terms will replace your existing terms text. Do you want to continue?');
+      }
+      return true;
+    }
+
+    generateTermsBtn.addEventListener('click', async () => {
+      // EC-5.4: Accidental overwrite protection
+      if (!checkOverwritePermission()) return;
+
       const title = document.getElementById('title').value.trim();
       const category = document.getElementById('category').value;
       const price = document.getElementById('price_per_day').value;
       const city = document.getElementById('city').value.trim();
+      const description = document.getElementById('description').value.trim();
 
-      const btn = document.getElementById('generateTermsBtn');
-      btn.disabled = true;
-      btn.innerHTML = `<span>Generating...</span>`;
+      generateTermsBtn.disabled = true;
+      generateTermsBtn.innerHTML = `<span>⏳ Generating Terms...</span>`;
 
       try {
-        // Try calling Module 5 AI endpoint if available, else generate standard template
         const res = await fetch('/api/ai/generate-terms', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${Auth.getToken()}`
           },
-          body: JSON.stringify({ title, category, pricePerDay: price, city })
+          body: JSON.stringify({ title, category, pricePerDay: price, city, description })
         });
 
-        if (res.ok) {
-          const data = await res.json();
-          document.getElementById('rental_terms').value = data.terms;
-          showToast('Rental terms generated!', 'success');
+        const data = await res.json();
+        if (data.terms) {
+          termsField.value = data.terms;
+          const sourceMsg = data.source === 'gemini' 
+            ? 'Custom rental terms generated with Gemini AI!' 
+            : 'Standard rental terms template loaded!';
+          showToast(sourceMsg, 'success');
         } else {
-          // Standard template fallback
-          generateFallbackTerms(title, price, city);
+          loadOfflineTemplate(title, price, city);
         }
-      } catch {
-        generateFallbackTerms(title, price, city);
+      } catch (err) {
+        console.warn('API error during terms generation:', err);
+        loadOfflineTemplate(title, price, city);
       } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<span>✨ Generate Terms with Gemini AI</span>`;
+        generateTermsBtn.disabled = false;
+        generateTermsBtn.innerHTML = `<span>✨ Generate with Gemini AI</span>`;
       }
     });
 
-    function generateFallbackTerms(title, price, city) {
+    useDefaultTermsBtn.addEventListener('click', async () => {
+      if (!checkOverwritePermission()) return;
+      const title = document.getElementById('title').value.trim();
+      const price = document.getElementById('price_per_day').value;
+      const city = document.getElementById('city').value.trim();
+      loadOfflineTemplate(title, price, city);
+    });
+
+    clearTermsBtn.addEventListener('click', () => {
+      if (termsField.value.trim().length === 0) return;
+      if (confirm('Clear rental terms text?')) {
+        termsField.value = '';
+        showToast('Rental terms cleared', 'info');
+      }
+    });
+
+    function loadOfflineTemplate(title, price, city) {
       const p = price ? `₹${price}` : 'daily rate';
-      document.getElementById('rental_terms').value = 
+      const late = price ? `₹${Math.max(150, Math.round(price * 0.25))}/hour` : '₹500/hour';
+      termsField.value = 
 `1. Permitted Use & Care:
-Handle the ${title || 'camera equipment'} with utmost professional care. Protect from moisture, sand, and dust. No unauthorized repairs.
+Handle the ${title || 'camera equipment'} with utmost professional care. Protect from moisture, sand, rain, and dust. No unauthorized repairs.
 
 2. Pickup & Return Timings:
-Pickup and return in ${city || 'the designated city'} between 9:00 AM and 8:00 PM on booked dates. Photo ID required at handover.
+Pickup and return in ${city || 'the designated handover area'} between 9:00 AM and 8:00 PM on booked dates. Photo ID required at handover inspection.
 
 3. Damage & Loss Liability:
-The renter is 100% liable for repair or full replacement costs in case of scratches, glass damage, or loss.
+The renter is 100% liable for repair or full replacement costs in case of scratches, glass damage, water ingress, or loss.
 
 4. Late Return Fee:
-Delayed returns will incur a late fee of ₹500/hour or up to the full daily rate of ${p}.
+Delayed returns will incur a late fee of ${late} or up to the full daily rate of ${p}.
 
 5. Cancellation Policy:
-Cancellations are allowed without penalty before the scheduled rental start date.`;
-      showToast('Template rental terms populated', 'info');
+Cancellations are allowed without penalty at any time prior to the scheduled rental start date.`;
+      showToast('Standard 5-clause template applied', 'info');
     }
 
     form.addEventListener('submit', async (e) => {

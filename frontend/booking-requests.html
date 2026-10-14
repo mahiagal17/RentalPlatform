@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Requests | RentLens</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <style>
+    .requests-layout {
+      padding: 3rem 0 5rem;
+    }
+    .header-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+    }
+    .stat-val {
+      font-family: var(--font-heading);
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.25rem;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: var(--bg-card);
+      border: 1px dashed var(--border-accent);
+      border-radius: var(--radius-lg);
+      margin-top: 1.5rem;
+    }
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="container">
+      <div class="nav-content"></div>
+    </div>
+  </header>
+
+  <main class="container requests-layout">
+    <!-- Header -->
+    <div class="header-meta">
+      <div>
+        <h1 style="font-size: 2.25rem; margin-bottom: 0.35rem;">Incoming Booking Requests</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          Review and approve peer rental requests for your listed camera equipment
+        </p>
+      </div>
+      <div style="display: flex; gap: 0.75rem;">
+        <a href="/my-listings.html" class="btn btn-secondary btn-sm">My Listings</a>
+        <a href="/listing-form.html" class="btn btn-primary btn-sm">+ List More Gear</a>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-val" style="color: #fde68a;" id="statPendingCount">0</div>
+        <div class="stat-label">Pending Decision</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color: #a7f3d0;" id="statConfirmedCount">0</div>
+        <div class="stat-label">Confirmed & Reserved</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color: #c7d2fe;" id="statTotalEarnings">₹0</div>
+        <div class="stat-label">Confirmed Rental Volume</div>
+      </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="dashboard-tabs">
+      <button class="tab-btn active" data-filter="pending">Pending Requests (<span id="countPending">0</span>)</button>
+      <button class="tab-btn" data-filter="confirmed">Confirmed Bookings (<span id="countConfirmed">0</span>)</button>
+      <button class="tab-btn" data-filter="all">All Request History (<span id="countAll">0</span>)</button>
+    </div>
+
+    <!-- Requests List Container -->
+    <div id="requestsListContainer">
+      <div style="text-align: center; padding: 3rem; color: var(--text-dim);">
+        Loading booking requests...
+      </div>
+    </div>
+  </main>
+
+  <script src="./js/app.js"></script>
+  <script>
+    // Route guard
+    if (!Auth.isAuthenticated()) {
+      window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.pathname)}`;
+    }
+
+    let allRequests = [];
+    let currentFilter = 'pending';
+
+    async function loadRequests() {
+      try {
+        const data = await apiFetch('/api/bookings/requests');
+        allRequests = data.requests || [];
+        updateStats();
+        renderRequests();
+      } catch (err) {
+        showToast('Failed to load requests: ' + err.message, 'error');
+        document.getElementById('requestsListContainer').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">⚠️</div>
+            <h3>Error Loading Requests</h3>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    function updateStats() {
+      const pendingList = allRequests.filter(r => r.status === 'Pending');
+      const confirmedList = allRequests.filter(r => r.status === 'Confirmed' || r.status === 'Completed');
+
+      const totalEarnings = confirmedList.reduce((sum, r) => sum + (Number(r.total_price) || 0), 0);
+
+      document.getElementById('statPendingCount').textContent = pendingList.length;
+      document.getElementById('statConfirmedCount').textContent = confirmedList.length;
+      document.getElementById('statTotalEarnings').textContent = formatINR(totalEarnings);
+
+      document.getElementById('countPending').textContent = pendingList.length;
+      document.getElementById('countConfirmed').textContent = confirmedList.length;
+      document.getElementById('countAll').textContent = allRequests.length;
+    }
+
+    function renderRequests() {
+      const container = document.getElementById('requestsListContainer');
+
+      let filtered = allRequests;
+      if (currentFilter === 'pending') {
+        filtered = allRequests.filter(r => r.status === 'Pending');
+      } else if (currentFilter === 'confirmed') {
+        filtered = allRequests.filter(r => r.status === 'Confirmed' || r.status === 'Completed');
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📬</div>
+            <h3>No requests in this view</h3>
+            <p style="color: var(--text-muted); margin: 0.5rem 0 1.5rem;">
+              ${currentFilter === 'pending' 
+                ? 'Great job! You have responded to all incoming booking requests.' 
+                : 'No booking requests found for this filter.'}
+            </p>
+            <a href="/my-listings.html" class="btn btn-secondary btn-sm">Manage My Equipment</a>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(r => {
+        const isPending = r.status === 'Pending';
+        const statusClass = r.status.toLowerCase();
+
+        let statusBadge = `<span class="status-badge ${statusClass}">${r.status}</span>`;
+        if (r.status === 'Pending') {
+          statusBadge = `<span class="status-badge pending">⏳ Awaiting Your Decision</span>`;
+        } else if (r.status === 'Confirmed') {
+          statusBadge = `<span class="status-badge confirmed">✓ Confirmed & Reserved</span>`;
+        } else if (r.status === 'Rejected') {
+          statusBadge = `<span class="status-badge rejected">✕ Declined</span>`;
+        } else if (r.status === 'Cancelled') {
+          statusBadge = `<span class="status-badge cancelled">✕ Cancelled by Renter</span>`;
+        } else if (r.status === 'Completed') {
+          statusBadge = `<span class="status-badge completed">✓ Completed</span>`;
+        }
+
+        // Action buttons (Accept / Reject)
+        let actionButtonsHtml = '';
+        if (isPending) {
+          actionButtonsHtml = `
+            <div style="display: flex; gap: 0.65rem; margin-top: 0.75rem;">
+              <button onclick="handleAcceptRequest(${r.id})" class="btn btn-success btn-sm">
+                <span>✓ Accept Booking</span>
+              </button>
+              <button onclick="handleRejectRequest(${r.id})" class="btn btn-outline btn-sm" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.4);">
+                <span>✕ Decline</span>
+              </button>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="booking-item-card">
+            <div class="booking-card-grid">
+              <!-- Thumbnail -->
+              <a href="/listing-detail.html?id=${r.listing_id}" class="booking-item-thumb">
+                <img src="${r.primary_image}" alt="${escapeHtml(r.listing_title)}" onerror="this.src='https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=400&q=80'">
+              </a>
+
+              <!-- Info -->
+              <div class="booking-card-info">
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+                  ${statusBadge}
+                  <span style="font-size: 0.78rem; color: var(--text-dim);">Request #${r.id}</span>
+                </div>
+
+                <h3 class="booking-title">
+                  <a href="/listing-detail.html?id=${r.listing_id}">${escapeHtml(r.listing_title)}</a>
+                </h3>
+
+                <div class="booking-meta-row">
+                  <span>📅 <strong>${r.start_date}</strong> to <strong>${r.end_date}</strong> (${r.days_count} ${r.days_count === 1 ? 'day' : 'days'})</span>
+                  <span>📍 Handover: ${escapeHtml(r.renter_city)}</span>
+                </div>
+
+                <div class="booking-party-info">
+                  <span>👤 Renter: <strong>${escapeHtml(r.renter_name)}</strong></span>
+                  <span>&bull;</span>
+                  <span>📞 Phone: <strong>${escapeHtml(r.renter_phone)}</strong></span>
+                  <span>&bull;</span>
+                  <span>✉️ ${escapeHtml(r.renter_email)}</span>
+                </div>
+
+                ${r.renter_notes ? `
+                  <div style="font-size: 0.85rem; color: #fde68a; background: rgba(245, 158, 11, 0.08); border-left: 3px solid var(--warning); padding: 0.5rem 0.75rem; border-radius: 0 4px 4px 0; margin-top: 0.5rem;">
+                    <strong>Shoot Note:</strong> &ldquo;${escapeHtml(r.renter_notes)}&rdquo;
+                  </div>
+                ` : ''}
+              </div>
+
+              <!-- Price & Decision Actions -->
+              <div class="booking-card-actions">
+                <div>
+                  <div class="booking-price-tag" style="color: #a7f3d0;">${formatINR(r.total_price)}</div>
+                  <div style="font-size: 0.78rem; color: var(--text-dim);">${formatINR(r.price_per_day)}/day &bull; Total Payout</div>
+                </div>
+
+                ${actionButtonsHtml}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[m]);
+    }
+
+    // Accept Booking (EC-4.4)
+    window.handleAcceptRequest = async function(bookingId) {
+      if (!confirm('Accept this booking? The equipment dates will be officially locked and confirmed.')) return;
+      try {
+        const res = await apiFetch(`/api/bookings/${bookingId}/accept`, {
+          method: 'PATCH'
+        });
+        showToast(res.message || 'Booking request confirmed!', 'success');
+        await loadRequests();
+      } catch (err) {
+        showToast('Failed to accept: ' + err.message, 'error');
+      }
+    };
+
+    // Reject Booking (EC-4.4, EC-3.7)
+    window.handleRejectRequest = async function(bookingId) {
+      if (!confirm('Decline this booking request? The calendar dates will be freed immediately for other creators.')) return;
+      try {
+        const res = await apiFetch(`/api/bookings/${bookingId}/reject`, {
+          method: 'PATCH'
+        });
+        showToast(res.message || 'Booking declined. Dates freed.', 'info');
+        await loadRequests();
+      } catch (err) {
+        showToast('Failed to decline: ' + err.message, 'error');
+      }
+    };
+
+    // Tab filtering
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.getAttribute('data-filter');
+        renderRequests();
+      });
+    });
+
+    loadRequests();
+  </script>
+</body>
+</html>

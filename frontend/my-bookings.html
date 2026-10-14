@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Bookings | RentLens</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <style>
+    .my-bookings-layout {
+      padding: 3rem 0 5rem;
+    }
+    .header-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: var(--bg-card);
+      border: 1px dashed var(--border-accent);
+      border-radius: var(--radius-lg);
+      margin-top: 1.5rem;
+    }
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="container">
+      <div class="nav-content"></div>
+    </div>
+  </header>
+
+  <main class="container my-bookings-layout">
+    <!-- Header -->
+    <div class="header-meta">
+      <div>
+        <h1 style="font-size: 2.25rem; margin-bottom: 0.35rem;">My Equipment Bookings</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          Track your gear reservations, rental schedules, and owner contact details
+        </p>
+      </div>
+      <a href="/" class="btn btn-primary btn-sm">
+        <span>+ Browse More Gear</span>
+      </a>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="dashboard-tabs">
+      <button class="tab-btn active" data-filter="all">All Bookings (<span id="countAll">0</span>)</button>
+      <button class="tab-btn" data-filter="active">Active & Upcoming (<span id="countActive">0</span>)</button>
+      <button class="tab-btn" data-filter="pending">Pending Approval (<span id="countPending">0</span>)</button>
+      <button class="tab-btn" data-filter="completed">Completed (<span id="countCompleted">0</span>)</button>
+      <button class="tab-btn" data-filter="cancelled">Cancelled & Declined (<span id="countCancelled">0</span>)</button>
+    </div>
+
+    <!-- Bookings List Container -->
+    <div id="bookingsListContainer">
+      <div style="text-align: center; padding: 3rem; color: var(--text-dim);">
+        Loading your bookings...
+      </div>
+    </div>
+  </main>
+
+  <!-- Cancel Confirmation Modal (EC-4.3) -->
+  <div id="cancelModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirm Cancellation</h3>
+        <button type="button" class="modal-close-btn" id="closeCancelModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-main); font-size: 1rem; margin-bottom: 1rem;">
+          Are you sure you want to cancel this booking for <strong id="cancelItemTitle">equipment</strong>?
+        </p>
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); border-radius: var(--radius-md); padding: 1rem; font-size: 0.85rem; color: #fca5a5;">
+          <strong>Notice:</strong> Once cancelled, your reservation will be released immediately and the dates will become open for other creators.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" id="cancelNoBtn">Keep Booking</button>
+        <button type="button" class="btn btn-danger btn-sm" id="confirmCancelBtn">Yes, Cancel Booking</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/app.js"></script>
+  <script>
+    // Route guard
+    if (!Auth.isAuthenticated()) {
+      window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.pathname)}`;
+    }
+
+    let allBookings = [];
+    let currentFilter = 'all';
+    let targetCancelBookingId = null;
+
+    async function loadBookings() {
+      try {
+        const data = await apiFetch('/api/bookings/my-bookings');
+        allBookings = data.bookings || [];
+        updateCounts();
+        renderBookings();
+      } catch (err) {
+        showToast('Failed to load bookings: ' + err.message, 'error');
+        document.getElementById('bookingsListContainer').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">⚠️</div>
+            <h3>Error Loading Bookings</h3>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    function updateCounts() {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const allCount = allBookings.length;
+      const pendingCount = allBookings.filter(b => b.status === 'Pending').length;
+      const activeCount = allBookings.filter(b => b.status === 'Confirmed' && b.end_date >= today).length;
+      const completedCount = allBookings.filter(b => b.status === 'Completed' || (b.status === 'Confirmed' && b.end_date < today)).length;
+      const cancelledCount = allBookings.filter(b => b.status === 'Cancelled' || b.status === 'Rejected').length;
+
+      document.getElementById('countAll').textContent = allCount;
+      document.getElementById('countActive').textContent = activeCount;
+      document.getElementById('countPending').textContent = pendingCount;
+      document.getElementById('countCompleted').textContent = completedCount;
+      document.getElementById('countCancelled').textContent = cancelledCount;
+    }
+
+    function renderBookings() {
+      const container = document.getElementById('bookingsListContainer');
+      const today = new Date().toISOString().split('T')[0];
+
+      let filtered = allBookings;
+      if (currentFilter === 'active') {
+        filtered = allBookings.filter(b => b.status === 'Confirmed' && b.end_date >= today);
+      } else if (currentFilter === 'pending') {
+        filtered = allBookings.filter(b => b.status === 'Pending');
+      } else if (currentFilter === 'completed') {
+        filtered = allBookings.filter(b => b.status === 'Completed' || (b.status === 'Confirmed' && b.end_date < today));
+      } else if (currentFilter === 'cancelled') {
+        filtered = allBookings.filter(b => b.status === 'Cancelled' || b.status === 'Rejected');
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📦</div>
+            <h3>No bookings found</h3>
+            <p style="color: var(--text-muted); margin: 0.5rem 0 1.5rem;">
+              ${currentFilter === 'all' 
+                ? 'You have not submitted any equipment rental requests yet.' 
+                : `No bookings found matching filter "${currentFilter}".`}
+            </p>
+            <a href="/" class="btn btn-primary btn-sm">Explore Gear Catalog</a>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(b => {
+        const statusClass = b.status.toLowerCase();
+        
+        // Status label mapping
+        let statusBadge = `<span class="status-badge ${statusClass}">${b.status}</span>`;
+        if (b.status === 'Pending') {
+          statusBadge = `<span class="status-badge pending">⏳ Awaiting Approval</span>`;
+        } else if (b.status === 'Confirmed') {
+          statusBadge = `<span class="status-badge confirmed">✓ Confirmed & Reserved</span>`;
+        } else if (b.status === 'Rejected') {
+          statusBadge = `<span class="status-badge rejected">✕ Declined by Owner</span>`;
+        } else if (b.status === 'Cancelled') {
+          statusBadge = `<span class="status-badge cancelled">✕ Cancelled</span>`;
+        } else if (b.status === 'Completed') {
+          statusBadge = `<span class="status-badge completed">✓ Completed</span>`;
+        }
+
+        // Cancellation action button (EC-4.3)
+        let cancelActionHtml = '';
+        if (b.can_cancel) {
+          cancelActionHtml = `
+            <button onclick="promptCancelBooking(${b.id}, '${escapeHtml(b.listing_title)}')" class="btn btn-danger btn-sm">
+              <span>Cancel Booking</span>
+            </button>
+          `;
+        } else if (b.status === 'Pending' || b.status === 'Confirmed') {
+          cancelActionHtml = `
+            <span style="font-size: 0.75rem; color: var(--text-dim); text-align: right;">
+              Rental active / starts today &bull; Cancellation closed
+            </span>
+          `;
+        }
+
+        return `
+          <div class="booking-item-card">
+            <div class="booking-card-grid">
+              <!-- Thumbnail -->
+              <a href="/listing-detail.html?id=${b.listing_id}" class="booking-item-thumb">
+                <img src="${b.primary_image}" alt="${escapeHtml(b.listing_title)}" onerror="this.src='https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=400&q=80'">
+              </a>
+
+              <!-- Info -->
+              <div class="booking-card-info">
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+                  ${statusBadge}
+                  <span style="font-size: 0.78rem; color: var(--text-dim);">Booking #${b.id}</span>
+                </div>
+                <h3 class="booking-title">
+                  <a href="/listing-detail.html?id=${b.listing_id}">${escapeHtml(b.listing_title)}</a>
+                </h3>
+                
+                <div class="booking-meta-row">
+                  <span>📅 <strong>${b.start_date}</strong> to <strong>${b.end_date}</strong> (${b.days_count} ${b.days_count === 1 ? 'day' : 'days'})</span>
+                  <span>📍 ${escapeHtml(b.listing_city)}</span>
+                </div>
+
+                <div class="booking-party-info">
+                  <span>👤 Owner: <strong>${escapeHtml(b.owner_name)}</strong></span>
+                  <span>&bull;</span>
+                  <span>📞 Phone: <strong>${escapeHtml(b.owner_phone)}</strong></span>
+                </div>
+
+                ${b.renter_notes ? `
+                  <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; font-style: italic;">
+                    &ldquo;${escapeHtml(b.renter_notes)}&rdquo;
+                  </div>
+                ` : ''}
+              </div>
+
+              <!-- Price & Actions -->
+              <div class="booking-card-actions">
+                <div>
+                  <div class="booking-price-tag">${formatINR(b.total_price)}</div>
+                  <div style="font-size: 0.78rem; color: var(--text-dim);">${formatINR(b.price_per_day)}/day &bull; Handover pay</div>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem;">
+                  <a href="/listing-detail.html?id=${b.listing_id}" class="btn btn-secondary btn-sm">View Item</a>
+                  ${cancelActionHtml}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[m]);
+    }
+
+    // Tab filtering
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.getAttribute('data-filter');
+        renderBookings();
+      });
+    });
+
+    // Cancellation modal logic (EC-4.3)
+    const cancelModal = document.getElementById('cancelModal');
+    const closeCancelBtn = document.getElementById('closeCancelModalBtn');
+    const cancelNoBtn = document.getElementById('cancelNoBtn');
+    const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+
+    window.promptCancelBooking = function(id, title) {
+      targetCancelBookingId = id;
+      document.getElementById('cancelItemTitle').textContent = `"${title}"`;
+      cancelModal.style.display = 'flex';
+    };
+
+    function hideCancelModal() {
+      cancelModal.style.display = 'none';
+      targetCancelBookingId = null;
+    }
+
+    if (closeCancelBtn) closeCancelBtn.addEventListener('click', hideCancelModal);
+    if (cancelNoBtn) cancelNoBtn.addEventListener('click', hideCancelModal);
+
+    if (confirmCancelBtn) {
+      confirmCancelBtn.addEventListener('click', async () => {
+        if (!targetCancelBookingId) return;
+        confirmCancelBtn.disabled = true;
+        confirmCancelBtn.textContent = 'Cancelling...';
+
+        try {
+          const res = await apiFetch(`/api/bookings/${targetCancelBookingId}/cancel`, {
+            method: 'PATCH'
+          });
+          showToast(res.message || 'Booking cancelled successfully!', 'success');
+          hideCancelModal();
+          await loadBookings();
+        } catch (err) {
+          showToast('Failed to cancel: ' + err.message, 'error');
+        } finally {
+          confirmCancelBtn.disabled = false;
+          confirmCancelBtn.textContent = 'Yes, Cancel Booking';
+        }
+      });
+    }
+
+    loadBookings();
+  </script>
+</body>
+</html>

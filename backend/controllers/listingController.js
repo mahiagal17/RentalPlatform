@@ -1,4 +1,5 @@
 const ListingModel = require('../models/listingModel');
+const { getDefaultTermsTemplate } = require('../services/defaultTermsTemplate');
 
 const ListingController = {
   /**
@@ -129,6 +130,11 @@ const ListingController = {
         }
       }
 
+      // EC-5.5: Auto-populate default terms if omitted or blank
+      const finalTerms = (rental_terms && rental_terms.trim().length > 0)
+        ? rental_terms.trim()
+        : getDefaultTermsTemplate({ title, category, pricePerDay: price, city });
+
       const listing = ListingModel.create({
         owner_id,
         title,
@@ -137,7 +143,7 @@ const ListingController = {
         price_per_day: price,
         city,
         images: parsedImages,
-        rental_terms
+        rental_terms: finalTerms
       });
 
       return res.status(201).json({
@@ -205,6 +211,13 @@ const ListingController = {
         }
       }
 
+      let finalTerms = listing.rental_terms;
+      if (rental_terms !== undefined) {
+        finalTerms = (typeof rental_terms === 'string' && rental_terms.trim().length > 0)
+          ? rental_terms.trim()
+          : getDefaultTermsTemplate({ title: title || listing.title, category: category || listing.category, pricePerDay: price, city: city || listing.city });
+      }
+
       const updated = ListingModel.update(Number(id), {
         title: title || listing.title,
         description: description || listing.description,
@@ -212,7 +225,7 @@ const ListingController = {
         price_per_day: price,
         city: city || listing.city,
         images: parsedImages,
-        rental_terms: rental_terms !== undefined ? rental_terms : listing.rental_terms
+        rental_terms: finalTerms
       });
 
       return res.json({

@@ -171,8 +171,16 @@ async function runTests() {
     console.log('   ✅ Inactive listing shows booking_disabled for non-owners.\n');
 
     // Test 11: EC-2.1 Critical Safeguard - Delete listing with active upcoming bookings
-    console.log('Test 11 [EC-2.1]: Attempt to delete Listing 1 (has confirmed upcoming booking)...');
-    res = await fetch(`${baseUrl}/listings/1`, {
+    console.log('Test 11 [EC-2.1]: Attempt to delete listing with confirmed upcoming booking...');
+    // Ensure an upcoming booking exists on listing 2
+    const { getDb } = require('../database/db');
+    const testDb = getDb();
+    testDb.prepare(`
+      INSERT OR REPLACE INTO bookings (id, listing_id, renter_id, owner_id, start_date, end_date, days_count, price_per_day, total_price, status, terms_accepted)
+      VALUES (999, 2, 2, 1, '2027-12-01', '2027-12-05', 5, 3500, 17500, 'Confirmed', 1)
+    `).run();
+
+    res = await fetch(`${baseUrl}/listings/2`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${ownerToken}` }
     });

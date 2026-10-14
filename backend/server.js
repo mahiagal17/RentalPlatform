@@ -30,7 +30,7 @@ app.use((req, res, next) => {
 });
 
 // Serve static frontend files
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -47,9 +47,17 @@ const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 app.use('/api/users', authRoutes);
 
-// Module 2: Listings & Search Routes
+// Module 2 & 3: Listings, Search & Availability Routes
 const listingRoutes = require('./routes/listingRoutes');
 app.use('/api/listings', listingRoutes);
+
+// Module 4: Booking Management Routes
+const bookingRoutes = require('./routes/bookingRoutes');
+app.use('/api/bookings', bookingRoutes);
+
+// Module 5: AI Rental Terms Routes
+const aiRoutes = require('./routes/aiRoutes');
+app.use('/api/ai', aiRoutes);
 
 
 // Global API 404 handler

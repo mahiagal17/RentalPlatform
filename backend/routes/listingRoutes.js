@@ -13,6 +13,13 @@ router.get('/owner/mine', authMiddleware, ListingController.getMyListings);
 // Single listing details (optional auth so we know if viewer is owner)
 router.get('/:id', optionalAuthMiddleware, ListingController.getListingById);
 
+// Module 3: Availability & Calendar Endpoints
+const AvailabilityController = require('../controllers/availabilityController');
+router.get('/:id/availability', AvailabilityController.getAvailability);
+router.post('/:id/check-availability', AvailabilityController.checkAvailability);
+router.post('/:id/blocked-dates', authMiddleware, AvailabilityController.blockDates);
+router.delete('/:id/blocked-dates/:blockId', authMiddleware, AvailabilityController.unblockDates);
+
 // Protected CRUD
 router.post('/', authMiddleware, ListingController.createListing);
 router.put('/:id', authMiddleware, ListingController.updateListing);

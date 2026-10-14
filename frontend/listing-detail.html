@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Equipment Details | RentLens</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <style>
+    .detail-layout {
+      padding: 2.5rem 0 5rem;
+    }
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      margin-bottom: 1.5rem;
+    }
+    .breadcrumb a:hover {
+      color: var(--primary);
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 3rem;
+      align-items: start;
+    }
+    /* Gallery */
+    .gallery-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .main-image-wrap {
+      width: 100%;
+      height: 420px;
+      border-radius: var(--radius-lg);
+      background: var(--bg-tertiary);
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-md);
+    }
+    .main-image-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .thumbnails-row {
+      display: flex;
+      gap: 0.75rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+    .thumb-btn {
+      width: 80px;
+      height: 60px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 2px solid transparent;
+      cursor: pointer;
+      background: var(--bg-tertiary);
+      transition: all var(--transition-fast);
+      flex-shrink: 0;
+    }
+    .thumb-btn.active, .thumb-btn:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+    .thumb-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    /* Details */
+    .spec-badges {
+      display: flex;
+      gap: 0.65rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .detail-title {
+      font-size: 2.25rem;
+      margin-bottom: 1rem;
+      line-height: 1.25;
+    }
+    .detail-section {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      margin-bottom: 1.75rem;
+    }
+    .detail-section h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .description-text {
+      color: var(--text-muted);
+      line-height: 1.75;
+      font-size: 0.98rem;
+      white-space: pre-line;
+    }
+    .terms-box {
+      background: rgba(0, 0, 0, 0.25);
+      border-left: 3px solid var(--primary);
+      padding: 1.25rem;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.65;
+      white-space: pre-line;
+    }
+    .disclaimer-note {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-top: 0.75rem;
+      display: flex;
+      gap: 0.4rem;
+      align-items: flex-start;
+    }
+    /* Owner Info */
+    .owner-info-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.25rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      margin-top: 1rem;
+    }
+    .owner-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+    /* Sidebar Booking Widget */
+    .booking-sidebar {
+      position: sticky;
+      top: 92px;
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      box-shadow: var(--shadow-lg);
+    }
+    .sidebar-price-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 1.5rem;
+    }
+    .sidebar-price-amount {
+      font-family: var(--font-heading);
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .sidebar-price-unit {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    .inactive-banner {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid var(--warning);
+      color: #fde68a;
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 900px) {
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+      .booking-sidebar {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="container">
+      <div class="nav-content"></div>
+    </div>
+  </header>
+
+  <main class="container detail-layout">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      <a href="/">Browse</a>
+      <span>/</span>
+      <span id="bcCategory">Category</span>
+      <span>/</span>
+      <span id="bcTitle" style="color: var(--text-main);">Equipment</span>
+    </nav>
+
+    <!-- Notice if inactive -->
+    <div id="statusAlert" style="display: none;" class="inactive-banner"></div>
+
+    <div class="detail-grid">
+      <!-- Left Column: Media & Specs -->
+      <div>
+        <div class="gallery-container">
+          <div class="main-image-wrap">
+            <img id="mainImage" src="" alt="Equipment Photo" onerror="this.src='https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=80'">
+          </div>
+          <div class="thumbnails-row" id="thumbnailsRow"></div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+          <div class="spec-badges">
+            <span class="card-category-badge" id="badgeCategory" style="position: static;">Category</span>
+            <span class="card-city-badge" id="badgeCity" style="position: static;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              City
+            </span>
+          </div>
+
+          <h1 id="listingTitle" class="detail-title">Loading Equipment...</h1>
+        </div>
+
+        <!-- Description Section -->
+        <section class="detail-section">
+          <h3>
+            <span>📝</span>
+            <span>About this Equipment</span>
+          </h3>
+          <p id="listingDescription" class="description-text"></p>
+        </section>
+
+        <!-- Rental Terms Section -->
+        <section class="detail-section">
+          <h3>
+            <span>📋</span>
+            <span>Rental Terms & Guidelines</span>
+          </h3>
+          <div id="listingTerms" class="terms-box">
+            Standard rental conditions apply.
+          </div>
+          <p class="disclaimer-note">
+            <span>ℹ️</span>
+            <span>Terms generated by owner or AI guidance for convenience. Review carefully before booking.</span>
+          </p>
+        </section>
+
+        <!-- Owner Card -->
+        <section class="detail-section">
+          <h3>
+            <span>👤</span>
+            <span>Equipment Owner</span>
+          </h3>
+          <div class="owner-info-card">
+            <div class="owner-avatar" id="ownerAvatarLetter">O</div>
+            <div>
+              <strong id="ownerName" style="color: var(--text-main); font-size: 1.05rem;">Owner Name</strong>
+              <p id="ownerLocation" style="color: var(--text-muted); font-size: 0.85rem;">Verified Owner in Mumbai</p>
+              <p id="ownerContact" style="color: var(--primary); font-size: 0.85rem; margin-top: 0.25rem;">📞 Contact provided after booking request</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Column: Booking Widget Slot (Integrated Modules 3 & 4) -->
+      <div>
+        <aside class="booking-sidebar">
+          <div class="sidebar-price-header">
+            <span class="sidebar-price-amount" id="sidebarPrice">₹0</span>
+            <span class="sidebar-price-unit">/ day (inclusive)</span>
+          </div>
+
+          <!-- Owner Quick Controls (if current user is owner) -->
+          <div id="ownerControls" style="display: none; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle);">
+            <div style="background: rgba(99, 102, 241, 0.12); border: 1px solid var(--border-accent); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
+              <p style="font-size: 0.9rem; color: #c7d2fe; font-weight: 700; margin-bottom: 0.35rem;">👑 You own this listing</p>
+              <p style="font-size: 0.8rem; color: var(--text-muted);">As the owner, you cannot book this equipment. You can block dates for maintenance or edit details.</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem; flex-direction: column;">
+              <button id="manageBlackoutBtn" class="btn btn-secondary btn-sm" style="width: 100%;">
+                <span>📅 Manage Blackout / Maintenance Dates</span>
+              </button>
+              <a id="editListingBtn" href="#" class="btn btn-outline btn-sm" style="width: 100%; text-align: center;">
+                <span>✏️ Edit Equipment Listing</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Calendar & Booking Form Slot -->
+          <div id="bookingWidgetSlot">
+            <!-- Calendar Mount Container -->
+            <div style="margin-bottom: 1.25rem;">
+              <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-main); display: flex; align-items: center; justify-content: space-between;">
+                <span>📅 Select Rental Dates</span>
+                <span style="font-size: 0.75rem; color: var(--text-dim); font-weight: normal;">Inclusive</span>
+              </h4>
+              <div id="calendarMount"></div>
+            </div>
+
+            <!-- Booking Calculation & Details (visible once dates chosen) -->
+            <div id="bookingDetailsCard" style="display: none; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem; font-size: 0.88rem;">
+                <span style="color: var(--text-muted);" id="calculationBreakdown">₹0 x 0 days</span>
+                <span style="font-weight: 700; color: #fff; font-size: 1.15rem;" id="calcTotalPrice">₹0</span>
+              </div>
+              <div style="font-size: 0.78rem; color: var(--text-dim); border-top: 1px solid var(--border-subtle); padding-top: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
+                <span>Handover & Settlement</span>
+                <span style="color: #a7f3d0;">Direct on Pickup</span>
+              </div>
+            </div>
+
+            <!-- Renter Optional Notes -->
+            <div id="bookingInputsWrap" style="display: none; margin-bottom: 1.25rem;">
+              <label for="bookingNotes" style="display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem;">
+                Renter Note / Shoot Details (Optional)
+              </label>
+              <textarea 
+                id="bookingNotes" 
+                class="form-textarea" 
+                rows="2" 
+                placeholder="e.g. 2-day outdoor commercial video shoot, pickup at 10 AM..."
+                style="min-height: 65px; font-size: 0.88rem; margin-bottom: 0.85rem;"
+              ></textarea>
+
+              <!-- Mandatory Terms Agreement Checkbox (EC-4.6) -->
+              <div style="display: flex; align-items: flex-start; gap: 0.65rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); padding: 0.85rem; border-radius: var(--radius-sm);">
+                <input type="checkbox" id="termsAcceptedCheckbox" style="margin-top: 0.25rem; width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;">
+                <label for="termsAcceptedCheckbox" style="font-size: 0.82rem; color: var(--text-main); cursor: pointer; line-height: 1.45;">
+                  I have read and agree to the 
+                  <button type="button" id="openTermsModalLink" style="background: none; border: none; padding: 0; color: var(--primary); font-size: 0.82rem; text-decoration: underline; cursor: pointer;">
+                    Rental Terms & Guidelines
+                  </button> 
+                  for this gear.
+                </label>
+              </div>
+            </div>
+
+            <!-- Booking CTA Button -->
+            <button id="bookCtaBtn" class="btn btn-primary" style="width: 100%;" disabled>
+              <span id="bookCtaText">Select Dates Above</span>
+            </button>
+          </div>
+
+          <div style="margin-top: 1.5rem; font-size: 0.82rem; color: var(--text-dim); text-align: center;">
+            <p>✓ Inclusive daily rates • Zero double-bookings</p>
+            <p style="margin-top: 0.35rem;">✓ Direct handover & ID verification</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal: Full Rental Terms & AI Legal Disclaimer (EC-5.6) -->
+  <div id="termsModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">📋 Rental Terms & Guidelines</h3>
+        <button type="button" class="modal-close-btn" id="closeTermsModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="termsModalContent" style="white-space: pre-line; font-size: 0.92rem; line-height: 1.7; color: var(--text-main);">
+          Standard rental terms apply.
+        </div>
+        <div style="margin-top: 1.5rem; background: rgba(99, 102, 241, 0.1); border: 1px solid var(--border-accent); border-radius: var(--radius-md); padding: 1rem; font-size: 0.82rem; color: #c7d2fe;">
+          <strong>⚖️ Mandatory Legal Disclaimer (EC-5.6):</strong><br>
+          These rental terms are generated for convenience and operational guidance only, and do not constitute formal legal advice. Owners and renters are advised to review and customize them.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary btn-sm" id="agreeTermsModalBtn">I Understand & Agree</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Owner Blackout / Maintenance Dates Manager (EC-3.8) -->
+  <div id="blackoutModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">📅 Manage Equipment Blackout Dates</h3>
+        <button type="button" class="modal-close-btn" id="closeBlackoutModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+          Block specific dates when this equipment is reserved for personal use, undergoing sensor cleaning, repair, or routine maintenance.
+        </p>
+
+        <form id="blackoutForm" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <label class="form-label" for="blockStart">Start Date *</label>
+              <input type="date" id="blockStart" class="form-input" required>
+            </div>
+            <div>
+              <label class="form-label" for="blockEnd">End Date *</label>
+              <input type="date" id="blockEnd" class="form-input" required>
+            </div>
+          </div>
+          <div>
+            <label class="form-label" for="blockReason">Reason / Maintenance Note</label>
+            <input type="text" id="blockReason" class="form-input" placeholder="e.g. Sensor cleaning, personal shoot, travel">
+          </div>
+          <button type="submit" id="submitBlockBtn" class="btn btn-primary btn-sm" style="align-self: flex-start;">
+            <span>+ Block Selected Dates</span>
+          </button>
+        </form>
+
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+          <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Currently Blocked Dates</h4>
+          <div id="blockedDatesList" style="font-size: 0.85rem; color: var(--text-muted);">
+            Loading blocked dates...
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" id="doneBlackoutModalBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/app.js"></script>
+  <script src="./js/calendar.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const listingId = urlParams.get('id');
+
+    if (!listingId) {
+      window.location.href = '/';
+    }
+
+    let currentListing = null;
+    let calendarInstance = null;
+    let currentSelectedRange = null;
+
+    async function loadListingDetails() {
+      try {
+        const data = await apiFetch(`/api/listings/${listingId}`);
+        currentListing = data.listing;
+        const isOwner = data.isOwner;
+
+        // Title and Breadcrumbs
+        document.title = `${currentListing.title} | RentLens`;
+        document.getElementById('listingTitle').textContent = currentListing.title;
+        document.getElementById('bcTitle').textContent = currentListing.title;
+        document.getElementById('bcCategory').textContent = currentListing.category;
+        document.getElementById('badgeCategory').textContent = currentListing.category;
+        document.getElementById('badgeCity').textContent = currentListing.city;
+
+        // Pricing
+        document.getElementById('sidebarPrice').textContent = formatINR(currentListing.price_per_day);
+
+        // Description & Terms
+        document.getElementById('listingDescription').textContent = currentListing.description;
+        if (currentListing.rental_terms && currentListing.rental_terms.trim()) {
+          document.getElementById('listingTerms').textContent = currentListing.rental_terms;
+          document.getElementById('termsModalContent').textContent = currentListing.rental_terms;
+        }
+
+        // Owner details
+        document.getElementById('ownerName').textContent = currentListing.owner_name;
+        document.getElementById('ownerLocation').textContent = `Verified Gear Owner in ${currentListing.owner_city}`;
+        document.getElementById('ownerAvatarLetter').textContent = currentListing.owner_name.charAt(0).toUpperCase();
+
+        // Handle Owner controls
+        if (isOwner) {
+          document.getElementById('ownerContact').textContent = `📞 Your Contact: ${currentListing.owner_phone}`;
+          document.getElementById('ownerControls').style.display = 'block';
+          document.getElementById('editListingBtn').href = `/listing-form.html?id=${currentListing.id}`;
+          
+          // Self-booking guard in UI (EC-4.1)
+          const ctaBtn = document.getElementById('bookCtaBtn');
+          ctaBtn.disabled = true;
+          ctaBtn.classList.remove('btn-primary');
+          ctaBtn.classList.add('btn-secondary');
+          document.getElementById('bookCtaText').textContent = 'You Own This Equipment';
+        }
+
+        // Handle Inactive status
+        if (currentListing.status_message) {
+          const alert = document.getElementById('statusAlert');
+          alert.textContent = currentListing.status_message;
+          alert.style.display = 'block';
+        }
+
+        if (currentListing.booking_disabled) {
+          const slot = document.getElementById('bookingWidgetSlot');
+          slot.innerHTML = `
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); border-radius: var(--radius-md); padding: 1.5rem; text-align: center;">
+              <h4 style="color: #fca5a5; margin-bottom: 0.5rem;">Booking Unavailable</h4>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">${currentListing.status_message || 'This equipment is currently inactive and not accepting booking requests.'}</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Gallery Photos
+        const images = (currentListing.images && currentListing.images.length > 0) 
+          ? currentListing.images 
+          : ['https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=80'];
+
+        const mainImg = document.getElementById('mainImage');
+        mainImg.src = images[0];
+
+        const thumbsRow = document.getElementById('thumbnailsRow');
+        if (images.length > 1) {
+          thumbsRow.innerHTML = images.map((img, idx) => `
+            <button class="thumb-btn ${idx === 0 ? 'active' : ''}" onclick="selectThumb('${img}', this)">
+              <img src="${img}" alt="Thumbnail ${idx + 1}" onerror="this.src='https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=300&q=80'">
+            </button>
+          `).join('');
+        }
+
+        // Mount Interactive Calendar (Module 3)
+        initCalendarWidget(currentListing, isOwner);
+
+      } catch (err) {
+        showToast('Error loading listing: ' + err.message, 'error');
+        setTimeout(() => window.location.href = '/', 1500);
+      }
+    }
+
+    function selectThumb(url, el) {
+      document.getElementById('mainImage').src = url;
+      document.querySelectorAll('.thumb-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function initCalendarWidget(listing, isOwner) {
+      const mount = document.getElementById('calendarMount');
+      if (!mount) return;
+
+      calendarInstance = new RentLensCalendar({
+        container: mount,
+        listingId: listing.id,
+        pricePerDay: listing.price_per_day,
+        onRangeSelect: (range) => {
+          currentSelectedRange = range;
+          handleRangeSelected(range, isOwner);
+        },
+        onClear: () => {
+          currentSelectedRange = null;
+          handleRangeCleared(isOwner);
+        }
+      });
+    }
+
+    function handleRangeSelected(range, isOwner) {
+      const detailsCard = document.getElementById('bookingDetailsCard');
+      const inputsWrap = document.getElementById('bookingInputsWrap');
+      const ctaBtn = document.getElementById('bookCtaBtn');
+      const ctaText = document.getElementById('bookCtaText');
+
+      detailsCard.style.display = 'block';
+      document.getElementById('calculationBreakdown').textContent = `${formatINR(range.pricePerDay)} × ${range.days} ${range.days === 1 ? 'day' : 'days'}`;
+      document.getElementById('calcTotalPrice').textContent = formatINR(range.totalPrice);
+
+      if (isOwner) {
+        // Owner cannot book (EC-4.1)
+        ctaBtn.disabled = true;
+        ctaText.textContent = 'You Own This Equipment';
+        return;
+      }
+
+      if (!Auth.isAuthenticated()) {
+        ctaBtn.disabled = false;
+        ctaText.textContent = `Log In to Reserve (${formatINR(range.totalPrice)})`;
+        ctaBtn.onclick = () => {
+          window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+        };
+        return;
+      }
+
+      // Authenticated renter
+      inputsWrap.style.display = 'block';
+      updateCtaButtonState();
+    }
+
+    function handleRangeCleared(isOwner) {
+      document.getElementById('bookingDetailsCard').style.display = 'none';
+      document.getElementById('bookingInputsWrap').style.display = 'none';
+      const ctaBtn = document.getElementById('bookCtaBtn');
+      ctaBtn.disabled = true;
+      document.getElementById('bookCtaText').textContent = isOwner ? 'You Own This Equipment' : 'Select Dates Above';
+    }
+
+    function updateCtaButtonState() {
+      const checkbox = document.getElementById('termsAcceptedCheckbox');
+      const ctaBtn = document.getElementById('bookCtaBtn');
+      const ctaText = document.getElementById('bookCtaText');
+
+      if (!currentSelectedRange) {
+        ctaBtn.disabled = true;
+        ctaText.textContent = 'Select Dates Above';
+        return;
+      }
+
+      if (!checkbox.checked) {
+        ctaBtn.disabled = true;
+        ctaText.textContent = 'Please Agree to Rental Terms';
+      } else {
+        ctaBtn.disabled = false;
+        ctaText.textContent = `Request to Book (${formatINR(currentSelectedRange.totalPrice)})`;
+        ctaBtn.onclick = submitBookingRequest;
+      }
+    }
+
+    // Terms checkbox listener
+    const termsCheckbox = document.getElementById('termsAcceptedCheckbox');
+    if (termsCheckbox) {
+      termsCheckbox.addEventListener('change', updateCtaButtonState);
+    }
+
+    // Submit Booking Request (Module 4)
+    async function submitBookingRequest() {
+      if (!currentSelectedRange) return;
+      const termsAccepted = document.getElementById('termsAcceptedCheckbox').checked;
+      
+      // EC-4.6 guard
+      if (!termsAccepted) {
+        showToast('You must accept the rental terms before submitting.', 'warning');
+        return;
+      }
+
+      const notes = document.getElementById('bookingNotes').value.trim();
+      const ctaBtn = document.getElementById('bookCtaBtn');
+      const ctaText = document.getElementById('bookCtaText');
+
+      ctaBtn.disabled = true;
+      ctaText.textContent = 'Submitting Request...';
+
+      try {
+        const payload = {
+          listingId: Number(listingId),
+          startDate: currentSelectedRange.startDate,
+          endDate: currentSelectedRange.endDate,
+          termsAccepted: true,
+          renterNotes: notes
+        };
+
+        const res = await apiFetch('/api/bookings', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        showToast('Booking request submitted successfully! Redirecting...', 'success');
+        setTimeout(() => {
+          window.location.href = '/my-bookings.html';
+        }, 1200);
+
+      } catch (err) {
+        showToast('Booking failed: ' + err.message, 'error');
+        ctaBtn.disabled = false;
+        ctaText.textContent = `Request to Book (${formatINR(currentSelectedRange.totalPrice)})`;
+      }
+    }
+
+    // Terms Modal Handlers (Module 5 & EC-5.6)
+    const termsModal = document.getElementById('termsModal');
+    const openTermsModalLink = document.getElementById('openTermsModalLink');
+    const closeTermsModalBtn = document.getElementById('closeTermsModalBtn');
+    const agreeTermsModalBtn = document.getElementById('agreeTermsModalBtn');
+
+    if (openTermsModalLink) {
+      openTermsModalLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        termsModal.style.display = 'flex';
+      });
+    }
+
+    if (closeTermsModalBtn) {
+      closeTermsModalBtn.addEventListener('click', () => {
+        termsModal.style.display = 'none';
+      });
+    }
+
+    if (agreeTermsModalBtn) {
+      agreeTermsModalBtn.addEventListener('click', () => {
+        const cb = document.getElementById('termsAcceptedCheckbox');
+        if (cb) {
+          cb.checked = true;
+          updateCtaButtonState();
+        }
+        termsModal.style.display = 'none';
+      });
+    }
+
+    // Owner Blackout Dates Modal Handlers (Module 3 & EC-3.8)
+    const blackoutModal = document.getElementById('blackoutModal');
+    const manageBlackoutBtn = document.getElementById('manageBlackoutBtn');
+    const closeBlackoutModalBtn = document.getElementById('closeBlackoutModalBtn');
+    const doneBlackoutModalBtn = document.getElementById('doneBlackoutModalBtn');
+    const blackoutForm = document.getElementById('blackoutForm');
+
+    if (manageBlackoutBtn) {
+      manageBlackoutBtn.addEventListener('click', () => {
+        blackoutModal.style.display = 'flex';
+        // Set min date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('blockStart').min = today;
+        document.getElementById('blockEnd').min = today;
+        loadOwnerBlockedDates();
+      });
+    }
+
+    if (closeBlackoutModalBtn) closeBlackoutModalBtn.addEventListener('click', () => blackoutModal.style.display = 'none');
+    if (doneBlackoutModalBtn) doneBlackoutModalBtn.addEventListener('click', () => blackoutModal.style.display = 'none');
+
+    async function loadOwnerBlockedDates() {
+      const listEl = document.getElementById('blockedDatesList');
+      try {
+        const res = await apiFetch(`/api/listings/${listingId}/availability`);
+        const blocked = res.unavailableRanges.filter(r => r.type === 'blocked');
+        if (blocked.length === 0) {
+          listEl.innerHTML = '<p style="color: var(--text-dim);">No active maintenance dates scheduled.</p>';
+          return;
+        }
+
+        listEl.innerHTML = blocked.map(b => `
+          <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); margin-bottom: 0.5rem; border: 1px solid var(--border-subtle);">
+            <div>
+              <strong style="color: #fde68a;">${b.start} to ${b.end}</strong>
+              <div style="font-size: 0.78rem; color: var(--text-muted);">${b.reason || 'Maintenance'}</div>
+            </div>
+            <button onclick="deleteBlockedDates(${b.id})" class="btn btn-danger btn-xs">Remove</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        listEl.innerHTML = `<p style="color: var(--danger);">Failed to load blocked dates: ${err.message}</p>`;
+      }
+    }
+
+    async function deleteBlockedDates(blockId) {
+      if (!confirm('Remove this blocked date range and make dates available again?')) return;
+      try {
+        await apiFetch(`/api/listings/${listingId}/blocked-dates/${blockId}`, { method: 'DELETE' });
+        showToast('Blocked dates removed!', 'success');
+        loadOwnerBlockedDates();
+        if (calendarInstance) calendarInstance.loadAvailability().then(() => calendarInstance.render());
+      } catch (err) {
+        showToast('Error removing blocked dates: ' + err.message, 'error');
+      }
+    }
+
+    if (blackoutForm) {
+      blackoutForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const startDate = document.getElementById('blockStart').value;
+        const endDate = document.getElementById('blockEnd').value;
+        const reason = document.getElementById('blockReason').value.trim();
+
+        if (startDate > endDate) {
+          showToast('End date must be on or after start date.', 'warning');
+          return;
+        }
+
+        try {
+          const res = await apiFetch(`/api/listings/${listingId}/blocked-dates`, {
+            method: 'POST',
+            body: JSON.stringify({ startDate, endDate, reason })
+          });
+          showToast(res.message || 'Dates blocked successfully!', 'success');
+          blackoutForm.reset();
+          loadOwnerBlockedDates();
+          if (calendarInstance) calendarInstance.loadAvailability().then(() => calendarInstance.render());
+        } catch (err) {
+          showToast('Failed to block dates: ' + err.message, 'error');
+        }
+      });
+    }
+
+    loadListingDetails();
+  </script>
+</body>
+</html>
